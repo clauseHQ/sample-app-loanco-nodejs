@@ -79,15 +79,19 @@ router.get('/restart-session', function(req, res, next) {
 passport.serializeUser  (function(user, done) {done(null, user)});
 passport.deserializeUser(function(obj,  done) {done(null, obj)});
 
+const obj = {
+  production: true,
+  clientID: app.config.auth.IntegrationKey,
+  clientSecret: app.config.auth.ClientSecret,
+  callbackURL: `${process.env.LOCAL_RETURN_URL}ds/callback`,
+  state: true // automatic CSRF protection.
+  // See https://github.com/jaredhanson/passport-oauth2/blob/master/lib/state/session.js
+}
+
+console.log(JSON.stringify(obj, null, 2));
+
 // Configure passport for DocusignStrategy
-let docusignStrategy = new DocusignStrategy({
-	  production: false,
-    clientID: app.config.auth.IntegrationKey,
-    clientSecret: app.config.auth.ClientSecret,
-    callbackURL: 'http://localhost:3801/ds/callback',
-    state: true // automatic CSRF protection.
-    // See https://github.com/jaredhanson/passport-oauth2/blob/master/lib/state/session.js
-  },   
+let docusignStrategy = new DocusignStrategy(obj,   
   function _processDsResult(accessToken, refreshToken, params, profile, done) {
     // The params arg will be passed additional parameters of the grant.
     // See https://github.com/jaredhanson/passport-oauth2/pull/84

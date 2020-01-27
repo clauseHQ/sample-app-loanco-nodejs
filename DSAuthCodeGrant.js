@@ -63,10 +63,10 @@ DSAuthCodeGrant.prototype.login = function (req, res, next) {
 
 DSAuthCodeGrant.prototype.oauth_callback1 = (req, res, next) => {
     // This callback URL is used for the login flow 
-    passport.authenticate('docusign', { failureRedirect: '/ds/login' })(req, res, next)
+    passport.authenticate('docusign', { production: true, failureRedirect: '/ds/login' })(req, res, next)
 }
 DSAuthCodeGrant.prototype.oauth_callback2 = function _oauth_callback2(req, res, next) {
-    this._accessToken = req.user.accessToken;
+  this._accessToken = req.user.accessToken;
     console.log(`Received access_token: |${req.user.accessToken}|`);
     console.log(`Expires at ${req.user.tokenExpirationTimestamp.format("dddd, MMMM Do YYYY, h:mm:ss a")}`);
 

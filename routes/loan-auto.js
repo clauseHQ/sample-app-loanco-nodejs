@@ -36,12 +36,14 @@ router.post('/loan/auto', function(req, res, next) {
 	{
 		console.log ('Starting processing of auto loan information');
 		var body = req.body;
+		console.log("BODY--- ", body)
 	
 		// set the required authentication information
 		let dsApiClient = new docusign.ApiClient();
 		dsApiClient.setBasePath(req.session.basePath);
 		dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + dsAuthCodeGrant.prototype.getAccessToken());
-		
+		console.log ('got here 1');
+
 		// instantiate a new EnvelopesApi object
 		var envelopesApi = new docusign.EnvelopesApi(dsApiClient);
 		
@@ -49,7 +51,9 @@ router.post('/loan/auto', function(req, res, next) {
 		var envDef = new docusign.EnvelopeDefinition();
 		envDef.emailSubject ='Auto Loan Application';
 		envDef.emailBlurb = 'Please sign the Loan application to start the application process.';
+		app.config.templatesByKey.cosigner_on_auto_loan.id = 'c5930672-8fe8-480e-9b61-de9942a75ae2';
 		envDef.templateId = app.config.templatesByKey.cosigner_on_auto_loan.id;
+		// envDef.templateId = 'c5930672-8fe8-480e-9b61-de9942a75ae2';
 	
 		// create a template role with a valid templateId and roleName and assign signer info
 		var tRoleApplicant = new docusign.TemplateRole();
@@ -72,19 +76,20 @@ router.post('/loan/auto', function(req, res, next) {
 			number: []
 		};
 		tabList.text.push(app.helpers.makeTab('Text', {
-			tabLabel: 'Phone',
+			tabLabel: 'routing',
 			value: body.inputPhone
 		}));
 		tabList.number.push(app.helpers.makeTab('Text', {
-			tabLabel: 'Amount',
+			tabLabel: 'bankName',
 			value: body.inputLoanAmount
 		}));
 		tabList.number.push(app.helpers.makeTab('Text', {
-			tabLabel: 'Duration',
+			tabLabel: 'message',
 			value: body.inputLoanLength
 		}));
 		
-	
+		console.log ('got here 2 -- ', tabList);
+
 		// Set default Tab values in template
 		var tabs = new docusign.TemplateTabs();
 		tabs.textTabs = tabList.text;
@@ -154,6 +159,9 @@ router.post('/loan/auto', function(req, res, next) {
 		// 	return doc;
 		// });
 		// console.log(JSON.stringify(mockEnv,null,2));
+
+		console.log ('got here 3');
+
 	
 		// call the createEnvelope() API
 		envelopesApi.createEnvelope(req.session.accountId, {envelopeDefinition: envDef}, function (error, envelopeSummary, response) {
@@ -166,17 +174,24 @@ router.post('/loan/auto', function(req, res, next) {
 			// Create and save envelope locally (temporary)
 			app.helpers.createAndSaveLocal(req, envelopeSummary.envelopeId)
 			.then(function(){
-	
+				console.log('envelopeSummary --- ', envelopeSummary)
+				// console.log('response --- ', response)
+
 				req.session.remainingSigners = [];
 	
 				if(body.inputSigningLocation == 'embedded'){
+					console.log('first if embedded')
+					// const recipientId = _.find(app.config.templatesByKey.cosigner_on_auto_loan.json.recipients.signers,{roleName: 'applicant'}).recipientId;
+					// console.log('recipientId', recipientId);
 					var tApplicantRecipient = {
-						recipientId: _.find(app.config.templatesByKey.cosigner_on_auto_loan.json.recipients.signers,{roleName: 'applicant'}).recipientId,
+						recipientId: '1',
 						clientUserId: tRoleApplicant.clientUserId,
 						name: tRoleApplicant.name,
 						email: tRoleApplicant.email
 					};
 				}
+				console.log('tApplicantRecipient', tApplicantRecipient)
+
 				if(body.inputCosignerCheckbox){
 					if(body.inputSigningLocationCosigner == 'embedded'){
 						var tCoSignerRecipient = {
@@ -194,11 +209,13 @@ router.post('/loan/auto', function(req, res, next) {
 				req.session.remainingSigners.push('remote-signer'); // last signer is remote (employee) 
 	
 				if(body.inputSigningLocation == 'embedded'){
+					console.log('second if embedded')
 					app.helpers.getRecipientUrl(req, envelopeSummary.envelopeId, tApplicantRecipient, function(err, data){
 						if(err){
 							res.send('Error with getRecipientUrl, please try again');
 							return console.error(err);
 						}
+						console.log('HERE --- ', data)
 	
 						req.session.envelopeId = envelopeSummary.envelopeId;
 						req.session.signingUrl = data.url;

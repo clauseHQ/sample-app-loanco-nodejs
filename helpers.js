@@ -51,7 +51,7 @@ helpers.getRecipientUrl = function getRecipientUrl(req, envelopeId, recipient, c
   // set the url where you want the recipient to go once they are done signing
     // - this can be used by your app to watch the URL and detect when signing has completed (or was canceled) 
     var returnUrl = new docusign.RecipientViewRequest();
-    returnUrl.returnUrl = 'http://localhost:3801/pop/' + envelopeId;
+    returnUrl.returnUrl = process.env.LOCAL_RETURN_URL + '/pop/' + envelopeId;
     returnUrl.authenticationMethod = 'email';
 
     // recipient information must match embedded recipient info we provided
